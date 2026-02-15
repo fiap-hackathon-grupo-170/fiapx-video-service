@@ -96,7 +96,6 @@ public class Video {
     }
 
     public boolean canBeDeleted() {
-        // Não permitir deletar vídeos em processamento
         return this.status != VideoStatus.PROCESSING;
     }
 
