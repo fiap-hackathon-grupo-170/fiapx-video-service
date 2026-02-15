@@ -1,0 +1,17 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  quality:
+    name: CI
+    uses: fiap-hackathon-grupo-170/fiapx-workflows/.github/workflows/ci.yml@main
+    with:
+      java-version: 17
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
