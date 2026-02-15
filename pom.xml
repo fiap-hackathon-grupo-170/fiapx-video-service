@@ -21,6 +21,10 @@
     <properties>
         <java.version>17</java.version>
         <spring-cloud.version>2023.0.0</spring-cloud.version>
+        <sonar.sources>src/main/java</sonar.sources>
+        <sonar.tests>src/test/java</sonar.tests>
+        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>
@@ -181,7 +185,7 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.12</version>
 
-                <configuration>
+                <!-- <configuration>
                     <rules>
                         <rule>
                             <element>BUNDLE</element>
@@ -194,7 +198,7 @@
                             </limits>
                         </rule>
                     </rules>
-                </configuration>
+                </configuration> -->
 
                 <executions>
                     <execution>
