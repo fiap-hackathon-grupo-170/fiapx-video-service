@@ -185,7 +185,7 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.12</version>
 
-                <!-- <configuration>
+                <configuration>
                     <rules>
                         <rule>
                             <element>BUNDLE</element>
@@ -193,12 +193,12 @@
                                 <limit>
                                     <counter>LINE</counter>
                                     <value>COVEREDRATIO</value>
-                                    <minimum>0.80</minimum>
+                                    <minimum>0.00</minimum> <!-- Valor temporário para fins de debug CI/CD -->
                                 </limit>
                             </limits>
                         </rule>
                     </rules>
-                </configuration> -->
+                </configuration>
 
                 <executions>
                     <execution>
