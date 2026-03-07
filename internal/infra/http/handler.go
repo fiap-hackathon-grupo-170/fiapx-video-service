@@ -2,11 +2,14 @@ package http
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
 
 	"github.com/fiapx/fiapx-video-service/internal/domain/entity"
+	"github.com/fiapx/fiapx-video-service/internal/domain/port"
 	"github.com/fiapx/fiapx-video-service/internal/usecase"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -29,6 +32,7 @@ type Handler struct {
 	get      *usecase.GetVideoUseCase
 	download *usecase.DownloadVideoUseCase
 	delete   *usecase.DeleteVideoUseCase
+	storage  port.VideoStorage
 	logger   *zap.Logger
 	maxBytes int64
 }
@@ -39,6 +43,7 @@ func NewHandler(
 	get *usecase.GetVideoUseCase,
 	download *usecase.DownloadVideoUseCase,
 	deleteUC *usecase.DeleteVideoUseCase,
+	storage port.VideoStorage,
 	logger *zap.Logger,
 	maxUploadMB int64,
 ) *Handler {
@@ -48,6 +53,7 @@ func NewHandler(
 		get:      get,
 		download: download,
 		delete:   deleteUC,
+		storage:  storage,
 		logger:   logger,
 		maxBytes: maxUploadMB * 1024 * 1024,
 	}
@@ -166,10 +172,22 @@ func (h *Handler) DownloadHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"url":                result.URL,
-		"expires_in_seconds": result.ExpiresSeconds,
-	})
+	stream, size, err := h.storage.StreamZip(c.Request.Context(), result.ZipKey)
+	if err != nil {
+		h.logger.Error("stream zip failed", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to stream zip file"})
+		return
+	}
+	defer stream.Close()
+
+	filename := fmt.Sprintf("frames_%s.zip", id.String())
+	c.Header("Content-Disposition", "attachment; filename=\""+filename+"\"")
+	c.Header("Content-Type", "application/zip")
+	if size > 0 {
+		c.Header("Content-Length", fmt.Sprintf("%d", size))
+	}
+	c.Status(http.StatusOK)
+	io.Copy(c.Writer, stream) //nolint:errcheck
 }
 
 func (h *Handler) DeleteHandler(c *gin.Context) {

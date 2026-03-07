@@ -99,3 +99,16 @@ func (s *Storage) PresignedDownloadURL(ctx context.Context, zipKey string, ttl t
 
 	return result, nil
 }
+
+func (s *Storage) StreamZip(ctx context.Context, zipKey string) (io.ReadCloser, int64, error) {
+	obj, err := s.client.GetObject(ctx, s.zipBucket, zipKey, miniogo.GetObjectOptions{})
+	if err != nil {
+		return nil, 0, fmt.Errorf("get zip object: %w", err)
+	}
+	info, err := obj.Stat()
+	if err != nil {
+		obj.Close()
+		return nil, 0, fmt.Errorf("stat zip object: %w", err)
+	}
+	return obj, info.Size, nil
+}

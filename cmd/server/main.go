@@ -106,7 +106,7 @@ func main() {
 	}()
 
 	// HTTP server
-	handler := httpinfra.NewHandler(uploadUC, listUC, getUC, downloadUC, deleteUC, log, cfg.MaxUploadSizeMB)
+	handler := httpinfra.NewHandler(uploadUC, listUC, getUC, downloadUC, deleteUC, storage, log, cfg.MaxUploadSizeMB)
 	httpServer := httpinfra.NewServer(handler, tokenValidator, cfg.HTTPPort, log)
 
 	go func() {

@@ -23,6 +23,7 @@ const presignedURLTTL = 15 * time.Minute
 
 type DownloadVideoResult struct {
 	URL            string
+	ZipKey         string
 	ExpiresSeconds int
 }
 
@@ -72,6 +73,7 @@ func (uc *DownloadVideoUseCase) Execute(ctx context.Context, id uuid.UUID, userI
 	}
 
 	return &DownloadVideoResult{
+		ZipKey:         video.ZipKey,
 		URL:            url,
 		ExpiresSeconds: int(presignedURLTTL.Seconds()),
 	}, nil
