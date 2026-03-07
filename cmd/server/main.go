@@ -62,6 +62,7 @@ func main() {
 		UseSSL:       cfg.MinIOUseSSL,
 		UploadBucket: cfg.MinIOUploadBucket,
 		ZipBucket:    cfg.MinIOZipBucket,
+		PublicURL:    cfg.MinIOPublicURL,
 	})
 	fatalOnErr(err, "create minio storage")
 	fatalOnErr(storage.EnsureBuckets(ctx), "ensure minio buckets")

@@ -19,6 +19,7 @@ type Config struct {
 	MinIOUseSSL       bool   `env:"MINIO_USE_SSL"       envDefault:"false"`
 	MinIOUploadBucket string `env:"MINIO_UPLOAD_BUCKET" envDefault:"uploads"`
 	MinIOZipBucket    string `env:"MINIO_ZIP_BUCKET"    envDefault:"zips"`
+	MinIOPublicURL    string `env:"MINIO_PUBLIC_URL"    envDefault:""`
 
 	// RabbitMQ
 	RabbitMQURL         string `env:"RABBITMQ_URL"          envDefault:"amqp://guest:guest@rabbitmq:5672/"`

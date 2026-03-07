@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"strings"
 	"time"
 
 	miniogo "github.com/minio/minio-go/v7"
@@ -15,6 +16,7 @@ type Storage struct {
 	client       *miniogo.Client
 	uploadBucket string
 	zipBucket    string
+	publicURL    string
 }
 
 type StorageConfig struct {
@@ -24,6 +26,7 @@ type StorageConfig struct {
 	UseSSL       bool
 	UploadBucket string
 	ZipBucket    string
+	PublicURL    string
 }
 
 func NewStorage(cfg StorageConfig) (*Storage, error) {
@@ -39,6 +42,7 @@ func NewStorage(cfg StorageConfig) (*Storage, error) {
 		client:       client,
 		uploadBucket: cfg.UploadBucket,
 		zipBucket:    cfg.ZipBucket,
+		publicURL:    strings.TrimRight(cfg.PublicURL, "/"),
 	}, nil
 }
 
@@ -84,5 +88,14 @@ func (s *Storage) PresignedDownloadURL(ctx context.Context, zipKey string, ttl t
 	if err != nil {
 		return "", fmt.Errorf("presign download url: %w", err)
 	}
-	return presignedURL.String(), nil
+
+	result := presignedURL.String()
+
+	// Reescreve o host para URL publica quando configurado (ex: minio:9000 -> localhost:9000)
+	if s.publicURL != "" {
+		internalOrigin := presignedURL.Scheme + "://" + presignedURL.Host
+		result = strings.Replace(result, internalOrigin, s.publicURL, 1)
+	}
+
+	return result, nil
 }
