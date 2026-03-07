@@ -120,7 +120,7 @@ func TestUploadAndListFlow(t *testing.T) {
 	deleteUC := usecase.NewDeleteVideoUseCase(repo, storage, cache, log)
 
 	// --- HTTP Server ---
-	handler := httpinfra.NewHandler(uploadUC, listUC, getUC, downloadUC, deleteUC, log, 500)
+	handler := httpinfra.NewHandler(uploadUC, listUC, getUC, downloadUC, deleteUC, storage, log, 500)
 	server := httpinfra.NewServer(handler, &staticTokenValidator{}, 0, log)
 	ts := httptest.NewServer(server.Engine())
 	t.Cleanup(ts.Close)
@@ -229,6 +229,7 @@ func TestHealthEndpoint(t *testing.T) {
 		usecase.NewGetVideoUseCase(&noopRepo{}, log),
 		usecase.NewDownloadVideoUseCase(&noopRepo{}, &noopStorage{}, log),
 		usecase.NewDeleteVideoUseCase(&noopRepo{}, &noopStorage{}, &noopCache{}, log),
+		&noopStorage{},
 		log,
 		500,
 	)
@@ -263,6 +264,9 @@ func (s *noopStorage) UploadVideo(ctx context.Context, key string, reader io.Rea
 func (s *noopStorage) DeleteVideo(ctx context.Context, key string) error { return nil }
 func (s *noopStorage) PresignedDownloadURL(ctx context.Context, zipKey string, ttl time.Duration) (string, error) {
 	return "https://example.com/presigned", nil
+}
+func (s *noopStorage) StreamZip(ctx context.Context, zipKey string) (io.ReadCloser, int64, error) {
+	return io.NopCloser(bytes.NewReader(nil)), 0, nil
 }
 
 type noopPublisher struct{}
