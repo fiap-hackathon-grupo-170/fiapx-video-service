@@ -124,10 +124,10 @@ func (m *mockPublisher) PublishVideoUploaded(_ context.Context, msg entity.Video
 // ---- Cache mock ----
 
 type mockCache struct {
-	store          map[string][]*entity.Video
-	getErr         error
-	setErr         error
-	invalidateErr  error
+	store           map[string][]*entity.Video
+	getErr          error
+	setErr          error
+	invalidateErr   error
 	invalidateCalls []string
 }
 
