@@ -1,12 +1,27 @@
-FROM maven:3.9-eclipse-temurin-17 AS build
-WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline
-COPY src ./src
-RUN mvn clean package -DskipTests
+# ---- Stage 1: Build ----
+FROM golang:1.22-alpine AS builder
 
-FROM eclipse-temurin:17-jre-alpine
+RUN apk add --no-cache git
+
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/fiapx-video-service ./cmd/server
+
+# ---- Stage 2: Runtime ----
+FROM alpine:3.19
+
+RUN apk add --no-cache ca-certificates tzdata \
+    && adduser -D -u 1000 appuser
+
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8082
-ENTRYPOINT ["java", "-jar", "app.jar"]
+COPY --from=builder /app/fiapx-video-service .
+COPY migrations/ ./migrations/
+
+USER appuser
+
+EXPOSE 8082 8083
+
+CMD ["/app/fiapx-video-service"]
