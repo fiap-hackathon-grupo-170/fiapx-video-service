@@ -1,7 +1,36 @@
-target/
-!.mvn/wrapper/maven-wrapper.jar
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test artifacts
+*.test
+*.out
+coverage.html
+
+# Temp files
+/tmp/
+*.tmp
 *.log
+
+# Environment
+.env
+*.env
+
+# Vendor
+vendor/
+
+# IDE
 .idea/
 *.iml
 .vscode/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
+Thumbs.db
