@@ -77,3 +77,9 @@ func TestLoad_PublicURLOverride(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "http://localhost:9000", cfg.MinIOPublicURL)
 }
+
+func TestLoad_InvalidEnvType(t *testing.T) {
+	t.Setenv("HTTP_PORT", "not-a-number")
+	_, err := config.Load()
+	assert.Error(t, err)
+}

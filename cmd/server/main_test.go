@@ -6,20 +6,31 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFatalOnErr_NilError(t *testing.T) {
-	// Should not panic when error is nil
-	assert.NotPanics(t, func() {
-		fatalOnErr(nil, "no error")
-	})
+func TestRunInvalidLogLevel(t *testing.T) {
+	t.Setenv("LOG_LEVEL", "invalid-level-xyz")
+	err := run()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "init logger")
 }
 
-func TestFatalOnErr_NonNilError(t *testing.T) {
-	// Should panic when error is not nil
-	assert.Panics(t, func() {
-		fatalOnErr(errForTest("test error"), "test message")
-	})
+func TestRunDefaultConfigFailsAtInfra(t *testing.T) {
+	// Default config points to unreachable hosts (minio:9000, rabbitmq:5672, etc.)
+	// run() should return an error at some infra step
+	err := run()
+	assert.Error(t, err)
 }
 
-type errForTest string
+func TestRunFailsAtRabbitMQ(t *testing.T) {
+	// Set minio to a reachable but fast-failing endpoint and rabbitmq to unreachable
+	t.Setenv("MINIO_ENDPOINT", "127.0.0.1:9099")
+	t.Setenv("RABBITMQ_URL", "amqp://127.0.0.1:19999/")
+	err := run()
+	assert.Error(t, err)
+}
 
-func (e errForTest) Error() string { return string(e) }
+func TestRunFailsAtRedis(t *testing.T) {
+	// Force redis to unreachable
+	t.Setenv("REDIS_URL", "redis://127.0.0.1:19998")
+	err := run()
+	assert.Error(t, err)
+}

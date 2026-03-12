@@ -10,35 +10,46 @@ import (
 	"go.uber.org/zap"
 )
 
+type consumerChannel interface {
+	ExchangeDeclare(name, kind string, durable, autoDelete, internal, noWait bool, args amqp.Table) error
+	QueueDeclare(name string, durable, autoDelete, exclusive, noWait bool, args amqp.Table) (amqp.Queue, error)
+	QueueBind(name, key, exchange string, noWait bool, args amqp.Table) error
+	Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args amqp.Table) (<-chan amqp.Delivery, error)
+	Close() error
+}
+
 type StatusHandler interface {
 	Execute(ctx context.Context, msg entity.VideoStatusMessage) error
 }
 
 type StatusConsumer struct {
-	conn    *amqp.Connection
-	queue   string
-	handler StatusHandler
-	logger  *zap.Logger
+	conn        *amqp.Connection
+	openChannel func() (consumerChannel, error)
+	queue       string
+	handler     StatusHandler
+	logger      *zap.Logger
 }
 
 func NewStatusConsumer(conn *amqp.Connection, queue string, handler StatusHandler, logger *zap.Logger) *StatusConsumer {
-	return &StatusConsumer{
+	c := &StatusConsumer{
 		conn:    conn,
 		queue:   queue,
 		handler: handler,
 		logger:  logger,
 	}
+	c.openChannel = func() (consumerChannel, error) {
+		return conn.Channel()
+	}
+	return c
 }
 
 func (c *StatusConsumer) Start(ctx context.Context) error {
-	ch, err := c.conn.Channel()
+	ch, err := c.openChannel()
 	if err != nil {
 		return fmt.Errorf("open status consumer channel: %w", err)
 	}
 	defer ch.Close()
 
-	// Declare exchange and queue idempotently so the video-service can start
-	// independently of the processing-service.
 	if err := ch.ExchangeDeclare("fiapx.video", "topic", true, false, false, false, nil); err != nil {
 		return fmt.Errorf("declare exchange: %w", err)
 	}

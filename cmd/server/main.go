@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,11 +25,22 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintf(os.Stderr, "fatal: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	cfg, err := config.Load()
-	fatalOnErr(err, "load config")
+	if err != nil {
+		return fmt.Errorf("load config: %w", err)
+	}
 
 	log, err := logger.New(cfg.LogLevel)
-	fatalOnErr(err, "init logger")
+	if err != nil {
+		return fmt.Errorf("init logger: %w", err)
+	}
 	defer log.Sync()
 
 	log.Info("starting fiapx-video-service")
@@ -46,7 +58,9 @@ func main() {
 
 	// Database
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
-	fatalOnErr(err, "connect to postgres")
+	if err != nil {
+		return fmt.Errorf("connect to postgres: %w", err)
+	}
 	defer pool.Close()
 
 	// Migrations
@@ -64,20 +78,30 @@ func main() {
 		ZipBucket:    cfg.MinIOZipBucket,
 		PublicURL:    cfg.MinIOPublicURL,
 	})
-	fatalOnErr(err, "create minio storage")
-	fatalOnErr(storage.EnsureBuckets(ctx), "ensure minio buckets")
+	if err != nil {
+		return fmt.Errorf("create minio storage: %w", err)
+	}
+	if err := storage.EnsureBuckets(ctx); err != nil {
+		return fmt.Errorf("ensure minio buckets: %w", err)
+	}
 
 	// RabbitMQ connection (shared for publisher and consumer)
 	rmqConn, err := amqp.Dial(cfg.RabbitMQURL)
-	fatalOnErr(err, "connect to rabbitmq")
+	if err != nil {
+		return fmt.Errorf("connect to rabbitmq: %w", err)
+	}
 	defer rmqConn.Close()
 
 	publisher, err := rabbitmq.NewPublisher(rmqConn, cfg.RabbitMQExchange)
-	fatalOnErr(err, "create rabbitmq publisher")
+	if err != nil {
+		return fmt.Errorf("create rabbitmq publisher: %w", err)
+	}
 
 	// Redis
 	cache, err := redisinfra.NewVideoCache(cfg.RedisURL)
-	fatalOnErr(err, "connect to redis")
+	if err != nil {
+		return fmt.Errorf("connect to redis: %w", err)
+	}
 
 	// Keycloak token validator
 	tokenValidator := keycloak.NewTokenValidator(cfg.KeycloakURL, cfg.KeycloakRealm, log)
@@ -134,10 +158,5 @@ func main() {
 	statusConsumer.Close()
 
 	log.Info("fiapx-video-service stopped")
-}
-
-func fatalOnErr(err error, msg string) {
-	if err != nil {
-		panic(msg + ": " + err.Error())
-	}
+	return nil
 }

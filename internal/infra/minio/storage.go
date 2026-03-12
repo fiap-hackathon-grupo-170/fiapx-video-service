@@ -12,8 +12,17 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
+type minioClient interface {
+	BucketExists(ctx context.Context, bucketName string) (bool, error)
+	MakeBucket(ctx context.Context, bucketName string, opts miniogo.MakeBucketOptions) error
+	PutObject(ctx context.Context, bucketName, objectName string, reader io.Reader, objectSize int64, opts miniogo.PutObjectOptions) (miniogo.UploadInfo, error)
+	RemoveObject(ctx context.Context, bucketName, objectName string, opts miniogo.RemoveObjectOptions) error
+	PresignedGetObject(ctx context.Context, bucketName, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error)
+	GetObject(ctx context.Context, bucketName, objectName string, opts miniogo.GetObjectOptions) (*miniogo.Object, error)
+}
+
 type Storage struct {
-	client       *miniogo.Client
+	client       minioClient
 	uploadBucket string
 	zipBucket    string
 	publicURL    string
