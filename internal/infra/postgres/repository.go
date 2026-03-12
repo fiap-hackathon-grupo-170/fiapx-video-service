@@ -6,11 +6,19 @@ import (
 
 	"github.com/fiapx/fiapx-video-service/internal/domain/entity"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type dbPool interface {
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+}
+
 type VideoRepository struct {
-	pool *pgxpool.Pool
+	pool dbPool
 }
 
 func NewVideoRepository(pool *pgxpool.Pool) *VideoRepository {

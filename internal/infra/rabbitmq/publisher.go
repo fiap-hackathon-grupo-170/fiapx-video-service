@@ -10,8 +10,14 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+type publishChannel interface {
+	PublishWithContext(ctx context.Context, exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error
+	ExchangeDeclare(name, kind string, durable, autoDelete, internal, noWait bool, args amqp.Table) error
+	Close() error
+}
+
 type Publisher struct {
-	channel  *amqp.Channel
+	channel  publishChannel
 	exchange string
 }
 

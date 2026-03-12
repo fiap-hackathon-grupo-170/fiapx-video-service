@@ -494,6 +494,74 @@ func TestCORSPreflight(t *testing.T) {
 	assert.Equal(t, "*", resp.Header.Get("Access-Control-Allow-Origin"))
 }
 
+func TestDownloadHandler_StreamZipError(t *testing.T) {
+	repo := newTestRepo()
+	video := entity.NewVideo("user-1", "user@test.com", "videos/test.mp4", "test.mp4", 1024)
+	video.MarkCompleted("zips/test.zip", 10, 5.0)
+	repo.videos[video.ID] = video
+
+	storage := &testStorage{streamErr: fmt.Errorf("stream error")}
+	ts := buildServer(repo, storage, &testPublisher{}, &testCache{}, nil)
+	defer ts.Close()
+
+	req := authedRequest(t, http.MethodGet, ts.URL+"/api/videos/"+video.ID.String()+"/download", nil)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+}
+
+func TestDownloadHandler_WrongUser(t *testing.T) {
+	repo := newTestRepo()
+	video := entity.NewVideo("other-user", "other@test.com", "videos/test.mp4", "test.mp4", 1024)
+	video.MarkCompleted("zips/test.zip", 10, 5.0)
+	repo.videos[video.ID] = video
+
+	ts := buildServer(repo, &testStorage{presignURL: "http://minio/zip"}, &testPublisher{}, &testCache{}, nil)
+	defer ts.Close()
+
+	req := authedRequest(t, http.MethodGet, ts.URL+"/api/videos/"+video.ID.String()+"/download", nil)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+}
+
+func TestDeleteHandler_RepoDeleteError(t *testing.T) {
+	repo := newTestRepo()
+	video := entity.NewVideo("user-1", "user@test.com", "videos/test.mp4", "test.mp4", 1024)
+	repo.videos[video.ID] = video
+	repo.deleteErr = fmt.Errorf("db error")
+
+	ts := buildServer(repo, &testStorage{}, &testPublisher{}, &testCache{}, nil)
+	defer ts.Close()
+
+	req := authedRequest(t, http.MethodDelete, ts.URL+"/api/videos/"+video.ID.String(), nil)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+}
+
+func TestDeleteHandler_WrongUser(t *testing.T) {
+	repo := newTestRepo()
+	video := entity.NewVideo("other-user", "other@test.com", "videos/test.mp4", "test.mp4", 1024)
+	repo.videos[video.ID] = video
+
+	ts := buildServer(repo, &testStorage{}, &testPublisher{}, &testCache{}, nil)
+	defer ts.Close()
+
+	req := authedRequest(t, http.MethodDelete, ts.URL+"/api/videos/"+video.ID.String(), nil)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+}
+
 func TestUploadHandler_AllValidExtensions(t *testing.T) {
 	extensions := []string{".mp4", ".avi", ".mov", ".mkv", ".wmv", ".flv", ".webm"}
 	for _, ext := range extensions {

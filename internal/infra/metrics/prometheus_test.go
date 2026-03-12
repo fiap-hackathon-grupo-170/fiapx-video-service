@@ -15,7 +15,6 @@ func TestMetrics_Initialized(t *testing.T) {
 }
 
 func TestMetrics_Counter_Increment(t *testing.T) {
-	// Verify counters can be incremented without panicking
 	metrics.VideosUploadedTotal.Inc()
 	metrics.VideosStatusUpdated.WithLabelValues("COMPLETED").Inc()
 	metrics.ActiveUploads.Inc()
