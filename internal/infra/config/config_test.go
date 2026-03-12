@@ -83,4 +83,3 @@ func TestLoad_InvalidEnvType(t *testing.T) {
 	_, err := config.Load()
 	assert.Error(t, err)
 }
-

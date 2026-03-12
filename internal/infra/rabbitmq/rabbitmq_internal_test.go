@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/fiapx/fiapx-video-service/internal/domain/entity"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/google/uuid"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
 
@@ -246,6 +246,6 @@ func TestConsumerClose(t *testing.T) {
 // mockAck implements amqp.Acknowledger
 type mockAck struct{}
 
-func (a *mockAck) Ack(_ uint64, _ bool) error  { return nil }
+func (a *mockAck) Ack(_ uint64, _ bool) error     { return nil }
 func (a *mockAck) Nack(_ uint64, _, _ bool) error { return nil }
-func (a *mockAck) Reject(_ uint64, _ bool) error { return nil }
+func (a *mockAck) Reject(_ uint64, _ bool) error  { return nil }

@@ -16,9 +16,9 @@ import (
 // --- Mock pool ---
 
 type mockPool struct {
-	execErr     error
-	queryRowFn  func(ctx context.Context, sql string, args ...any) pgx.Row
-	queryFn     func(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	execErr    error
+	queryRowFn func(ctx context.Context, sql string, args ...any) pgx.Row
+	queryFn    func(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 }
 
 func (m *mockPool) Exec(_ context.Context, _ string, _ ...any) (pgconn.CommandTag, error) {
@@ -71,14 +71,14 @@ type mockRows struct {
 	errVal  error
 }
 
-func (r *mockRows) Close()                                        {}
-func (r *mockRows) Err() error                                     { return r.errVal }
-func (r *mockRows) CommandTag() pgconn.CommandTag                  { return pgconn.CommandTag{} }
-func (r *mockRows) FieldDescriptions() []pgconn.FieldDescription   { return nil }
-func (r *mockRows) Next() bool                                     { r.idx++; return r.idx <= len(r.data) }
-func (r *mockRows) Values() ([]any, error)                         { return nil, nil }
-func (r *mockRows) RawValues() [][]byte                            { return nil }
-func (r *mockRows) Conn() *pgx.Conn                               { return nil }
+func (r *mockRows) Close()                                       {}
+func (r *mockRows) Err() error                                   { return r.errVal }
+func (r *mockRows) CommandTag() pgconn.CommandTag                { return pgconn.CommandTag{} }
+func (r *mockRows) FieldDescriptions() []pgconn.FieldDescription { return nil }
+func (r *mockRows) Next() bool                                   { r.idx++; return r.idx <= len(r.data) }
+func (r *mockRows) Values() ([]any, error)                       { return nil, nil }
+func (r *mockRows) RawValues() [][]byte                          { return nil }
+func (r *mockRows) Conn() *pgx.Conn                              { return nil }
 
 func (r *mockRows) Scan(dest ...any) error {
 	if r.scanErr != nil {
